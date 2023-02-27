@@ -1,0 +1,12 @@
+/opt/qnx660/host/linux/x86/usr/bin/make -k CPULIST=x86 all --file=/tmp/QMakefile1677418064889224314520823403652.tmp 
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Cx86 -fMakefile all
+make[1]: Entering directory `/home/user/mount_point/labs/2/bbs_lib/x86'
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Cso -fMakefile all 
+make[2]: Entering directory `/home/user/mount_point/labs/2/bbs_lib/x86/so'
+make[2]: Nothing to be done for `all'.
+make[2]: Leaving directory `/home/user/mount_point/labs/2/bbs_lib/x86/so'
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Cso-g -fMakefile all
+make[2]: Entering directory `/home/user/mount_point/labs/2/bbs_lib/x86/so-g'
+make[2]: Nothing to be done for `all'.
+make[2]: Leaving directory `/home/user/mount_point/labs/2/bbs_lib/x86/so-g'
+make[1]: Leaving directory `/home/user/mount_point/labs/2/bbs_lib/x86'

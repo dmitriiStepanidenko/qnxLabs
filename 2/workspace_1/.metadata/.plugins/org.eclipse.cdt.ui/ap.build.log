@@ -1,0 +1,16 @@
+/opt/qnx660/host/linux/x86/usr/bin/make -k CPULIST=x86 all --file=/tmp/QMakefile16774461759304202465477628174088.tmp 
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Cx86 -fMakefile all
+make[1]: Entering directory `/home/user/mount_point/labs/2/workspace_1/ap/x86'
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Co -fMakefile all 
+make[2]: Entering directory `/home/user/mount_point/labs/2/workspace_1/ap/x86/o'
+make[2]: Warning: File `/home/user/mount_point/labs/2/workspace_1/ap/x86/o/ap' has modification time 25 s in the future
+make[2]: Nothing to be done for `all'.
+make[2]: Leaving directory `/home/user/mount_point/labs/2/workspace_1/ap/x86/o'
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Co-g -fMakefile all
+make[2]: warning:  Clock skew detected.  Your build may be incomplete.
+make[2]: Entering directory `/home/user/mount_point/labs/2/workspace_1/ap/x86/o-g'
+make[2]: Warning: File `/home/user/mount_point/labs/2/workspace_1/ap/x86/o-g/ap_g' has modification time 25 s in the future
+make[2]: Nothing to be done for `all'.
+make[2]: Leaving directory `/home/user/mount_point/labs/2/workspace_1/ap/x86/o-g'
+make[1]: Leaving directory `/home/user/mount_point/labs/2/workspace_1/ap/x86'
+make[2]: warning:  Clock skew detected.  Your build may be incomplete.

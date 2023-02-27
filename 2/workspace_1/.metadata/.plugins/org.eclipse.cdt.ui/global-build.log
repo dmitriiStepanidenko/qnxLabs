@@ -1,0 +1,69 @@
+/opt/qnx660/host/linux/x86/usr/bin/make -k CPULIST=x86 clean all --file=/tmp/QMakefile16774461257718136431971530726226.tmp 
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Cx86 -fMakefile clean
+make[1]: Entering directory `/home/user/mount_point/labs/2/workspace_1/ap/x86'
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Co -fMakefile clean 
+make[2]: Entering directory `/home/user/mount_point/labs/2/workspace_1/ap/x86/o'
+/bin/rm -f  ap  *.pinfo *.o *.err *.map mapfile *.sym *.i   
+make[2]: Leaving directory `/home/user/mount_point/labs/2/workspace_1/ap/x86/o'
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Co-g -fMakefile clean
+make[2]: Entering directory `/home/user/mount_point/labs/2/workspace_1/ap/x86/o-g'
+/bin/rm -f  ap_g  *.pinfo *.o *.err *.map mapfile *.sym *.i   
+make[2]: Leaving directory `/home/user/mount_point/labs/2/workspace_1/ap/x86/o-g'
+make[1]: Leaving directory `/home/user/mount_point/labs/2/workspace_1/ap/x86'
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Cx86 -fMakefile all
+make[1]: Entering directory `/home/user/mount_point/labs/2/workspace_1/ap/x86'
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Co -fMakefile all 
+make[2]: Entering directory `/home/user/mount_point/labs/2/workspace_1/ap/x86/o'
+make[2]: Warning: File `ap.cc' has modification time 68 s in the future
+/opt/qnx660/host/linux/x86/usr/bin/qcc -Vgcc_ntox86 -c -Wc,-Wall  -Os          -DNDEBUG    -I. -I/home/user/mount_point/labs/2/workspace_1/ap/x86/o -I/home/user/mount_point/labs/2/workspace_1/ap/x86 -I/home/user/mount_point/labs/2/workspace_1/ap -I/home/user/mount_point/labs/2/bbs_lib -I/opt/qnx660/target/qnx6/usr/include     -DBUILDENV_qss   /home/user/mount_point/labs/2/workspace_1/ap/ap.cc 
+/home/user/mount_point/labs/2/workspace_1/ap/ap.cc: In function 'int io_devctl(resmgr_context_t*, io_devctl_t*, iofunc_ocb_t*)':
+/home/user/mount_point/labs/2/workspace_1/ap/ap.cc:58:4: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+/home/user/mount_point/labs/2/workspace_1/ap/ap.cc:54:5: warning: unused variable 'rx_data' [-Wunused-variable]
+/bin/rm -f  /home/user/mount_point/labs/2/workspace_1/ap/x86/o/ap
+/opt/qnx660/host/linux/x86/usr/bin/qcc -Vgcc_ntox86  -lang-c++ -lang-c++    -o /home/user/mount_point/labs/2/workspace_1/ap/x86/o/ap    ap.o   -L . -L /opt/qnx660/target/qnx6/x86/lib -L /opt/qnx660/target/qnx6/x86/usr/lib  -Wl,--rpath-link . -Wl,--rpath-link /opt/qnx660/target/qnx6/x86/lib -Wl,--rpath-link /opt/qnx660/target/qnx6/x86/usr/lib      
+make[2]: warning:  Clock skew detected.  Your build may be incomplete.
+make[2]: Leaving directory `/home/user/mount_point/labs/2/workspace_1/ap/x86/o'
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Co-g -fMakefile all
+make[2]: Entering directory `/home/user/mount_point/labs/2/workspace_1/ap/x86/o-g'
+/opt/qnx660/host/linux/x86/usr/bin/qcc -Vgcc_ntox86 -c -Wc,-Wall                -I. -I/home/user/mount_point/labs/2/workspace_1/ap/x86/o -I/home/user/mount_point/labs/2/workspace_1/ap/x86/o-g -I/home/user/mount_point/labs/2/workspace_1/ap/x86 -I/home/user/mount_point/labs/2/workspace_1/ap -I/home/user/mount_point/labs/2/bbs_lib -I/opt/qnx660/target/qnx6/usr/include    -g    -DVARIANT_g -DBUILDENV_qss   /home/user/mount_point/labs/2/workspace_1/ap/ap.cc 
+make[2]: Warning: File `ap.cc' has modification time 68 s in the future
+/bin/rm -f  /home/user/mount_point/labs/2/workspace_1/ap/x86/o-g/ap_g
+/opt/qnx660/host/linux/x86/usr/bin/qcc -Vgcc_ntox86  -lang-c++ -lang-c++    -o /home/user/mount_point/labs/2/workspace_1/ap/x86/o-g/ap_g    ap.o   -L . -L /opt/qnx660/target/qnx6/x86/lib -L /opt/qnx660/target/qnx6/x86/usr/lib  -Wl,--rpath-link . -Wl,--rpath-link /opt/qnx660/target/qnx6/x86/lib -Wl,--rpath-link /opt/qnx660/target/qnx6/x86/usr/lib    -g     
+/home/user/mount_point/labs/2/workspace_1/ap/ap.cc: In function 'int io_devctl(resmgr_context_t*, io_devctl_t*, iofunc_ocb_t*)':
+make[2]: Leaving directory `/home/user/mount_point/labs/2/workspace_1/ap/x86/o-g'
+make[1]: Leaving directory `/home/user/mount_point/labs/2/workspace_1/ap/x86'
+/home/user/mount_point/labs/2/workspace_1/ap/ap.cc:58:4: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+/home/user/mount_point/labs/2/workspace_1/ap/ap.cc:54:5: warning: unused variable 'rx_data' [-Wunused-variable]
+make[2]: warning:  Clock skew detected.  Your build may be incomplete.
+/opt/qnx660/host/linux/x86/usr/bin/make -k CPULIST=x86 all --file=/tmp/QMakefile16774461530802209257637749152277.tmp 
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Cx86 -fMakefile all
+make[1]: Entering directory `/home/user/mount_point/labs/2/workspace_1/ap/x86'
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Co -fMakefile all 
+make[2]: Entering directory `/home/user/mount_point/labs/2/workspace_1/ap/x86/o'
+make[2]: Warning: File `/home/user/mount_point/labs/2/workspace_1/ap/x86/o/ap' has modification time 48 s in the future
+make[2]: Nothing to be done for `all'.
+make[2]: Leaving directory `/home/user/mount_point/labs/2/workspace_1/ap/x86/o'
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Co-g -fMakefile all
+make[2]: Entering directory `/home/user/mount_point/labs/2/workspace_1/ap/x86/o-g'
+make[2]: Nothing to be done for `all'.
+make[2]: Leaving directory `/home/user/mount_point/labs/2/workspace_1/ap/x86/o-g'
+make[1]: Leaving directory `/home/user/mount_point/labs/2/workspace_1/ap/x86'
+make[2]: warning:  Clock skew detected.  Your build may be incomplete.
+make[2]: Warning: File `/home/user/mount_point/labs/2/workspace_1/ap/x86/o-g/ap_g' has modification time 48 s in the future
+make[2]: warning:  Clock skew detected.  Your build may be incomplete.
+/opt/qnx660/host/linux/x86/usr/bin/make -k CPULIST=x86 all --file=/tmp/QMakefile16774461759304202465477628174088.tmp 
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Cx86 -fMakefile all
+make[1]: Entering directory `/home/user/mount_point/labs/2/workspace_1/ap/x86'
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Co -fMakefile all 
+make[2]: Entering directory `/home/user/mount_point/labs/2/workspace_1/ap/x86/o'
+make[2]: Warning: File `/home/user/mount_point/labs/2/workspace_1/ap/x86/o/ap' has modification time 25 s in the future
+make[2]: Nothing to be done for `all'.
+make[2]: Leaving directory `/home/user/mount_point/labs/2/workspace_1/ap/x86/o'
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Co-g -fMakefile all
+make[2]: warning:  Clock skew detected.  Your build may be incomplete.
+make[2]: Entering directory `/home/user/mount_point/labs/2/workspace_1/ap/x86/o-g'
+make[2]: Warning: File `/home/user/mount_point/labs/2/workspace_1/ap/x86/o-g/ap_g' has modification time 25 s in the future
+make[2]: Nothing to be done for `all'.
+make[2]: Leaving directory `/home/user/mount_point/labs/2/workspace_1/ap/x86/o-g'
+make[1]: Leaving directory `/home/user/mount_point/labs/2/workspace_1/ap/x86'
+make[2]: warning:  Clock skew detected.  Your build may be incomplete.

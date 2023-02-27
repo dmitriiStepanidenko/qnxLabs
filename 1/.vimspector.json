@@ -1,0 +1,26 @@
+{
+  "adapters": {
+    "CodeLLDB - StopOnEntry": {
+      "extends": "custom-codelldb",
+      "name": "CoHostingLLDB"
+    }
+  },
+  "configurations": {
+    "cpptools (gdb)": {
+      "adapter": "vscode-cpptools",
+      "variables": {
+        "BUILDME": {
+          "shell": "gcc -o ${workspaceRoot}/test.out -g  ${workspaceRoot}/main.c  "
+        }
+      },
+      "configuration": {
+        "request": "launch",
+        "program": "${workspaceRoot}/test.out",
+        "args": ["-i", ".rand_file", "-o", "cypher.txt", "-x", "4212", "-a", "84589","-c","45989","-m","217728"],
+        "stopAtEntry": true,
+        "MIMode": "gdb"
+      }
+    }
+  }
+}
+
