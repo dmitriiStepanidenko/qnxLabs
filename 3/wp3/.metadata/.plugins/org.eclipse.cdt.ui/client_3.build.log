@@ -1,0 +1,12 @@
+/opt/qnx660/host/linux/x86/usr/bin/make -k CPULIST=x86 clean --file=/tmp/QMakefile16807382176465242854583691225506.tmp 
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Cx86 -fMakefile clean
+make[1]: Entering directory `/media/rtos/labs/3/client_3/x86'
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Co -fMakefile clean 
+make[2]: Entering directory `/media/rtos/labs/3/client_3/x86/o'
+/bin/rm -f  client_3  *.pinfo *.o *.err *.map mapfile *.sym *.i   
+make[2]: Leaving directory `/media/rtos/labs/3/client_3/x86/o'
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Co-g -fMakefile clean
+make[2]: Entering directory `/media/rtos/labs/3/client_3/x86/o-g'
+/bin/rm -f  client_3_g  *.pinfo *.o *.err *.map mapfile *.sym *.i   
+make[2]: Leaving directory `/media/rtos/labs/3/client_3/x86/o-g'
+make[1]: Leaving directory `/media/rtos/labs/3/client_3/x86'

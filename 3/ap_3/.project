@@ -3,6 +3,7 @@
 	<name>ap_3</name>
 	<comment></comment>
 	<projects>
+		<project>bbs_3</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

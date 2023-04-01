@@ -1,0 +1,245 @@
+#include "bbs.h"
+#include <errno.h>
+#include <iostream>
+#include <mutex>
+#include <pthread.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <unordered_map>
+#include <utility>
+
+/*
+ *  определяем константу THREAD_POOL_PARAM_T чтобы отключить предупреждения
+ *  компилятора при использовании функций семейства dispatch_*()
+ */
+#define THREAD_POOL_PARAM_T dispatch_context_t
+
+#include <sys/dispatch.h>
+#include <sys/iofunc.h>
+#define _GNU_SOURCE
+
+static resmgr_connect_funcs_t connect_funcs;
+static resmgr_io_funcs_t io_funcs;
+static iofunc_attr_t attr;
+
+bbs::BBSParams params;
+pthread_mutex_t mutex;
+
+uint32_t last_int;
+
+bool parity(uint32_t n) {
+  int count = 0;
+  while (n) {
+    count += n & 1;
+    n >>= 1;
+  }
+
+  return (count % 2 != 0);
+}
+
+uint32_t bbs_algo(uint32_t x0, uint32_t p, uint32_t q) {
+  // Ну тот самый алгоритм
+  uint32_t x1 = (x0 * x0) % (p * q);
+  return x1;
+}
+
+uint32_t psp() {
+  // ПСП
+  uint32_t packed = 0;
+  for (size_t i = 0; i < 32; i++) {
+    last_int = bbs_algo(last_int, params.p, params.q);
+    packed |= (parity(last_int) & 1) << i;
+  }
+  return packed;
+}
+
+struct ClientContext {
+  bbs::BBSParams client_settings;
+  // x_n := x_{n-1}^2 mod M
+  uint32_t last_x;
+  ClientContext() : client_settings(bbs::BBSParams()), last_x(0) {
+    std::cout << "Client constructed" << std::endl;
+  }
+  ~ClientContext() { std::cout << "Client deleted" << std::endl; }
+};
+
+std::mutex mut;
+std::unordered_map<int, ClientContext> contexts;
+
+uint32_t BBS(ClientContext &context) {
+  int N = sizeof(uint32_t) * 8;
+  uint32_t result = 0;
+  uint32_t M = context.client_settings.p * context.client_settings.q;
+  for (int i = 0; i < N; ++i) {
+    result = result | (context.last_x % 2);
+    result = result << (i == N - 1 ? 0 : 1);
+    context.last_x = (context.last_x * context.last_x) % M;
+  }
+  std::cout << "Thread " << gettid() << " has returned a value " << result
+            << std::endl;
+  return result;
+}
+
+int io_devctl(resmgr_context_t *ctp, io_devctl_t *msg, void *extra) {
+  iofunc_ocb_t *ocb = reinterpret_cast<iofunc_ocb_t *>(extra);
+  union {
+    bbs::BBSParams data;
+    uint32_t data32;
+    /* ... other devctl types you can receive */
+  } *rx_data;
+  int sts;
+  // 1) see if it's a standard devctl()
+  if ((sts = iofunc_devctl_default(ctp, msg, ocb)) != _RESMGR_DEFAULT) {
+    return (sts);
+  }
+
+  // rx_data = _DEVCTL_DATA(msg->i);
+
+  bbs::BBSParams *rx_params_data;
+  uint32_t *return_number;
+  uint32_t nbytes = 0;
+  uint32_t result_number;
+  // 2) see which command it was, and act on it
+  pthread_mutex_lock(&mutex);
+  switch (msg->i.dcmd) {
+  case MY_DEVCTL_SET_PARAM:
+    rx_params_data = (bbs::BBSParams *)_DEVCTL_DATA(msg->i);
+    params.p = rx_params_data->p;
+    params.q = rx_params_data->q;
+    params.seed = rx_params_data->seed;
+    last_int = rx_params_data->seed;
+    printf("\nSET PARAM!!\np=%d,q=%d,seed=%d\n", params.p, params.q,
+           params.seed);
+    pthread_mutex_unlock(&mutex);
+    break;
+  case MY_DEVCTL_START:
+
+    return_number = (uint32_t *)_DEVCTL_DATA(msg->i);
+    result_number = psp();
+    *return_number = result_number;
+    memset(&msg->o, 0, sizeof(msg->o));
+    /*
+    If you wanted to pass something different to the return
+    field of the devctl() you could do it through this member.
+    See note 5.
+    */
+    msg->o.ret_val = result_number;
+    nbytes = sizeof(result_number);
+    /* Indicate the number of bytes and return the message */
+    msg->o.nbytes = nbytes;
+    pthread_mutex_unlock(&mutex);
+    return (_RESMGR_PTR(ctp, &msg->o, sizeof(msg->o) + nbytes));
+
+    printf("\nSTART\n");
+    break;
+
+  default:
+    printf("\nGOT MESSAGE!!\n");
+    return (ENOSYS);
+  }
+  // 4) tell the client it worked
+  memset(&msg->o, 0, sizeof(msg->o));
+  SETIOV(ctp->iov, &msg->o, sizeof(msg->o));
+  pthread_mutex_unlock(&mutex);
+  return (_RESMGR_NPARTS(1));
+}
+
+int io_open(resmgr_context_t *ctp, io_open_t *msg, RESMGR_HANDLE_T *handle,
+            void *extra) {
+  pthread_mutex_lock(&mutex);
+  std::cout << "Mutex is owned by thread " << gettid() << std::endl;
+  contexts.emplace(ctp->info.scoid, ClientContext());
+
+  std::cout << "CLIENT:\t" << ctp->info.scoid << "\tCONNECTED" << std::endl;
+  pthread_mutex_unlock(&mutex);
+  std::cout << "Mutex is freed by thread " << gettid() << std::endl;
+  iofunc_ocb_t *ocb = reinterpret_cast<iofunc_ocb_t *>(extra);
+
+  return (iofunc_open_default(ctp, msg, handle, ocb));
+}
+
+int io_close(resmgr_context_t *ctp, io_close_t *msg, void *extra) {
+  iofunc_ocb_t *ocb = reinterpret_cast<iofunc_ocb_t *>(extra);
+  pthread_mutex_lock(&mutex);
+  std::cout << "Mutex is owned by thread " << gettid() << std::endl;
+  contexts.erase(ctp->info.scoid);
+  std::cout << "CLIENT:\t" << ctp->info.scoid << "\tCLOSE" << std::endl;
+  pthread_mutex_unlock(&mutex);
+  std::cout << "Mutex is freed by thread " << gettid() << std::endl;
+  return (iofunc_close_dup_default(ctp, msg, ocb));
+}
+
+int main(int argc, char **argv) {
+  pthread_mutex_init(&mutex, NULL);
+
+  thread_pool_attr_t pool_attr;
+  resmgr_attr_t resmgr_attr;
+  dispatch_t *dpp;
+  thread_pool_t *tpp;
+  dispatch_context_t *ctp;
+  int id;
+
+  /* инициализация интерфейса диспетчеризации */
+  if ((dpp = dispatch_create()) == NULL) {
+    fprintf(stderr, "%s: Unable to allocate dispatch handle.\n", argv[0]);
+    return EXIT_FAILURE;
+  }
+
+  /* инициализация атрибутов АР - параметры IOV */
+  memset(&resmgr_attr, 0, sizeof resmgr_attr);
+  resmgr_attr.nparts_max = 1;
+  resmgr_attr.msg_max_size = 2048;
+
+  /* инициализация структуры функций-обработчиков сообщений */
+  iofunc_func_init(_RESMGR_CONNECT_NFUNCS, &connect_funcs, _RESMGR_IO_NFUNCS,
+                   &io_funcs);
+
+  /* инициализация атрибутов устройства*/
+  iofunc_attr_init(&attr, S_IFNAM | 0666, 0, 0);
+
+  /* For handling _IO_DEVCTL, sent by devctl() */
+  io_funcs.devctl = io_devctl;
+  /* Set custom handler for opening connections */
+  connect_funcs.open = io_open;
+  /* Set custom handler for connection closing*/
+  io_funcs.close_dup = io_close;
+
+  /* прикрепление к точке монтирования в пространстве имён путей */
+  id = resmgr_attach(dpp, /* хэндл интерфейса диспетчеризации */
+                     &resmgr_attr,     /* атрибуты АР */
+                     "/dev/cryptobbs", /* точка монтирования */
+                     _FTYPE_ANY,       /* open type              */
+                     0,                /* флаги                  */
+                     &connect_funcs, /* функции установления соединения */
+                     &io_funcs, /* функции ввода-вывода   */
+                     &attr); /* хэндл атрибутов устройства */
+  if (id == -1) {
+    fprintf(stderr, "%s: Unable to attach name.\n", argv[0]);
+    return EXIT_FAILURE;
+  }
+
+  /* инициализация атрибутов пула потоков */
+  memset(&pool_attr, 0, sizeof pool_attr);
+  pool_attr.handle = dpp;
+  pool_attr.context_alloc = dispatch_context_alloc;
+  pool_attr.block_func = dispatch_block;
+  pool_attr.unblock_func = dispatch_unblock;
+  pool_attr.handler_func = dispatch_handler;
+  pool_attr.context_free = dispatch_context_free;
+  pool_attr.lo_water = 3;
+  pool_attr.hi_water = 4;
+  pool_attr.increment = 1;
+  pool_attr.maximum = 50;
+
+  /* инициализация пула потоков */
+  if ((tpp = thread_pool_create(&pool_attr, POOL_FLAG_EXIT_SELF)) == NULL) {
+    fprintf(stderr, "%s: Unable to initialize thread pool.\n", argv[0]);
+    return EXIT_FAILURE;
+  }
+
+  /* запустить потоки, блокирующая функция */
+  thread_pool_start(tpp);
+  /* здесь вы не окажетесь, грустно */
+}
