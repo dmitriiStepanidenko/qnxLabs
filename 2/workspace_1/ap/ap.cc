@@ -78,7 +78,7 @@ int io_devctl (resmgr_context_t *ctp, io_devctl_t *msg,
 			break;
 		case MY_DEVCTL_START:
 
-			return_number = (uint32_t *)_DEVCTL_DATA(msg->i);
+			return_number = reinterpret_cast<uint32_t *> (_DEVCTL_DATA(msg->i) );
 			result_number = psp();
 			*return_number = result_number;
 			memset(&msg->o, 0, sizeof(msg->o));

@@ -1,0 +1,12 @@
+/opt/qnx660/host/linux/x86/usr/bin/make -k CPULIST=x86 all --file=/tmp/QMakefile16805886084697256960895457089733.tmp 
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Cx86 -fMakefile all
+make[1]: Entering directory `/media/rtos/labs/3/ap_3/x86'
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Co -fMakefile all 
+make[2]: Entering directory `/media/rtos/labs/3/ap_3/x86/o'
+make[2]: Nothing to be done for `all'.
+make[2]: Leaving directory `/media/rtos/labs/3/ap_3/x86/o'
+/opt/qnx660/host/linux/x86/usr/bin/make -j 1 -Co-g -fMakefile all
+make[2]: Entering directory `/media/rtos/labs/3/ap_3/x86/o-g'
+make[2]: Nothing to be done for `all'.
+make[2]: Leaving directory `/media/rtos/labs/3/ap_3/x86/o-g'
+make[1]: Leaving directory `/media/rtos/labs/3/ap_3/x86'

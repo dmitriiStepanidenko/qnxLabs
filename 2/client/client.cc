@@ -14,6 +14,7 @@
 std::vector<std::uint32_t> vec(VEC_SIZE);
 size_t current=-1;
 bool circle = false;
+bool sigint = false;
 
 void push(std::vector<std::uint32_t> & vec, size_t& current, std::uint32_t number){
 	current++;
@@ -26,14 +27,9 @@ void push(std::vector<std::uint32_t> & vec, size_t& current, std::uint32_t numbe
 
 
 void sigint_handler(int sig) {
-	size_t end_index = current;
-	if (circle == true)
-		end_index = vec.size() - 1;
-    for(size_t i = 0; i< end_index; i++)
-    	std::cout << vec[i] << "; ";
-    std::cout << std::endl;
+	sigint = true;
 
-    exit(0);
+    //exit(0);
 }
 
 int main( int argc, char **argv )
@@ -63,11 +59,19 @@ int main( int argc, char **argv )
     signal(SIGINT, sigint_handler);
 
     commandSetResult = devctl(fd, MY_DEVCTL_START, &number, sizeof(number), NULL);
-    while (commandSetResult == EOK) {
+    while (commandSetResult == EOK && !sigint) {
     	push(vec, current, number);
 
     	commandSetResult = devctl(fd, MY_DEVCTL_START, &number, sizeof(number), NULL);
     };
+
+	size_t end_index = current;
+	if (circle == true)
+		end_index = vec.size() - 1;
+    for(size_t i = 0; i< end_index; i++)
+    	std::cout << vec[i] << "; ";
+    std::cout << std::endl;
+
 
     close(fd);
 

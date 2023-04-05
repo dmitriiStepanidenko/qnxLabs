@@ -1,0 +1,170 @@
+#include <errno.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+/*
+ * определяем константу THREAD_POOL_PARAM_T чтобы отключить
+ предупреждения
+ * компилятора при использовании функций семейства dispatch_*()
+ */
+#define THREAD_POOL_PARAM_T dispatch_context_t
+#include "bbs.h"
+#include <pthread.h> // И зачем же он может понадобиться!?
+#include <sys/dispatch.h>
+#include <sys/iofunc.h>
+
+static resmgr_connect_funcs_t connect_funcs;
+static resmgr_io_funcs_t io_funcs;
+static iofunc_attr_t attr;
+
+pthread_mutex_t 🤔 = PTHREAD_MUTEX_INITIALIZER;
+
+int io_devctl(resmgr_context_t *ctp, io_devctl_t *msg, RESMGR_OCB_T *ocb) {
+  int status, nbytes;
+
+  union {
+    bbs::BBSParams params;
+    uint32_t data32;
+  } *rx_data;
+
+  /*
+   * Check if there is system message
+   */
+  if ((status = iofunc_devctl_default(ctp, msg, ocb)) != _RESMGR_DEFAULT) {
+    return (status);
+  }
+
+  status = nbytes = 0;
+
+  bbs::BBSParams *tmp_params;
+
+  int32_t client_id = ctp->info.scoid;
+  {
+    const std::lock_guard<std::mutex> lock_g(mut);
+    std::cout << "Mutex is owned by thread " << gettid() << std::endl;
+    switch (msg->i.dcmd) {
+    case SET_PARAMS: {
+      tmp_params = reinterpret_cast<bbs::BBSParams *>(_DEVCTL_DATA(msg->i));
+
+      // validation
+      if (!(tmp_params->p % 4 == 3 && tmp_params->q % 4 == 3)) {
+        fprintf(stderr, "%d %d: Invalid numbers.\n", tmp_params->p,
+                tmp_params->q);
+      } else {
+        contexts[client_id].client_settings = *tmp_params;
+        contexts[client_id].last_x = tmp_params->seed;
+      }
+      nbytes = 0;
+      break;
+    }
+    case GET_DATA: {
+      *(reinterpret_cast<uint32_t *>(_DEVCTL_DATA(msg->i))) =
+          BBS(contexts[client_id]);
+      nbytes = sizeof(uint32_t);
+      break;
+    }
+    default: {
+      return (ENOSYS);
+    }
+    }
+
+    memset(&msg->o, 0, sizeof(msg->o));
+    /* Indicate the number of bytes and return the message */
+    msg->o.nbytes = nbytes;
+  }
+  std::cout << "Mutex is freed by thread " << gettid() << std::endl;
+  return (_RESMGR_PTR(ctp, &msg->o, sizeof(msg->o) + nbytes));
+}
+
+int io_open(resmgr_context_t *ctp, io_open_t *msg, RESMGR_HANDLE_T *handle,
+            void *extra) {
+  // 1. Открыли
+  {
+    const std::lock_guard<std::mutex> lock_g(mut);
+    std::cout << "Mutex is owned by thread " << gettid() << std::endl;
+    contexts.emplace(ctp->info.scoid, ClientContext());
+
+    std::cout << "CLIENT:\t" << ctp->info.scoid << "\tCONNECTED" << std::endl;
+  }
+  std::cout << "Mutex is freed by thread " << gettid() << std::endl;
+  return (iofunc_open_default(ctp, msg, handle, extra));
+}
+// 2. Испугались
+int io_close(resmgr_context_t *ctp, io_close_t *msg, iofunc_ocb_t *ocb) {
+  // 3. Закрыли
+  {
+    const std::lock_guard<std::mutex> lock_g(mut);
+    std::cout << "Mutex is owned by thread " << gettid() << std::endl;
+    contexts.erase(ctp->info.scoid);
+    std::cout << "CLIENT:\t" << ctp->info.scoid << "\tCLOSE" << std::endl;
+  }
+  std::cout << "Mutex is freed by thread " << gettid() << std::endl;
+  return (iofunc_close_dup_default(ctp, msg, ocb));
+}
+
+int main(int argc, char **argv) {
+  thread_pool_attr_t pool_attr;
+  resmgr_attr_t resmgr_attr;
+  dispatch_t *dpp;
+  thread_pool_t *tpp;
+  dispatch_context_t *ctp;
+  int id;
+  /* инициализация интерфейса диспетчеризации */
+  if ((dpp = dispatch_create()) == NULL) {
+    fprintf(stderr, "%s: Unable to allocate dispatch handle.\n", argv[0]);
+    return EXIT_FAILURE;
+  }
+  /* инициализация атрибутов АР - параметры IOV */
+  memset(&resmgr_attr, 0, sizeof resmgr_attr);
+  resmgr_attr.nparts_max = 1;
+  resmgr_attr.msg_max_size = 2048;
+  /* инициализация структуры функций-обработчиков сообщений */ iofunc_func_init(
+      _RESMGR_CONNECT_NFUNCS, &connect_funcs, _RESMGR_IO_NFUNCS, &io_funcs);
+  /* инициализация атрибутов устройства*/
+  iofunc_attr_init(&attr, S_IFNAM | 0666, 0, 0);
+
+  // обработать _IO_DEVCTL, обработать открытие соединения, обр. закрытие
+  // соединения
+  io_funcs.devctl = io_devctl;
+  connect_funcs.open = io_open;
+  io_funcs.close_dup = io_close;
+
+  /* прикрепление к точке монтирования в пространстве имён путей */
+  id = resmgr_attach(dpp,
+                     /* хэндл интерфейса диспетчеризации */
+                     &resmgr_attr,  /* атрибуты АР */
+                     "/dev/sample", /* точка монтирования */
+                     _FTYPE_ANY,    /* open type */
+                     0,             /* флаги */
+                     &connect_funcs, /* функции установления соединения */
+                     &io_funcs, /* функции ввода-вывода */
+                     &attr); /* хэндл атрибутов устройства */
+
+  if (id == -1) {
+    fprintf(stderr, "%s: Unable to attach name.\n", argv[0]);
+    return EXIT_FAILURE;
+  }
+  /* инициализация атрибутов пула потоков */
+  memset(&pool_attr, 0, sizeof pool_attr);
+  pool_attr.handle = dpp;
+  pool_attr.context_alloc = dispatch_context_alloc;
+  pool_attr.block_func = dispatch_block;
+  pool_attr.unblock_func = dispatch_unblock;
+  pool_attr.handler_func = dispatch_handler;
+  pool_attr.context_free = dispatch_context_free;
+  pool_attr.lo_water = 2;
+  pool_attr.hi_water = 4;
+  pool_attr.increment = 1;
+  pool_attr.maximum = 50;
+  /* инициализация пула потоков */
+  if ((tpp = thread_pool_create(&pool_attr, POOL_FLAG_EXIT_SELF)) == NULL) {
+    fprintf(stderr, "%s: Unable to initialize thread pool.\n", argv[0]);
+    return EXIT_FAILURE;
+  }
+  /* запустить потоки, блокирующая функция */
+  thread_pool_start(tpp);
+  /* здесь вы не окажетесь, грустно */
+  return 0;
+}
