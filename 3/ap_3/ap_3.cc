@@ -74,7 +74,6 @@ private:
   bbs::BBSParams params;
 };
 
-std::mutex mut;
 std::unordered_map<int, CTX> ctx;
 
 int io_devctl(resmgr_context_t *ctp, io_devctl_t *msg, void *extra) {
@@ -101,9 +100,8 @@ int io_devctl(resmgr_context_t *ctp, io_devctl_t *msg, void *extra) {
   pthread_mutex_lock(&mutex);
   switch (msg->i.dcmd) {
   case MY_DEVCTL_SET_PARAM:
-    rx_params_data = (bbs::BBSParams *)_DEVCTL_DATA(msg->i);
+    rx_params_data = reinterpret_cast<bbs::BBSParams *>(_DEVCTL_DATA(msg->i));
     ctx[scoid].set_params(*rx_params_data);
-    pthread_mutex_unlock(&mutex);
     break;
   case MY_DEVCTL_START:
     return_number = (uint32_t *)_DEVCTL_DATA(msg->i);
@@ -121,12 +119,9 @@ int io_devctl(resmgr_context_t *ctp, io_devctl_t *msg, void *extra) {
     msg->o.nbytes = nbytes;
     pthread_mutex_unlock(&mutex);
     return (_RESMGR_PTR(ctp, &msg->o, sizeof(msg->o) + nbytes));
-
-    printf("\nSTART\n");
-    break;
-
   default:
     printf("\nGOT MESSAGE!!\n");
+    pthread_mutex_unlock(&mutex);
     return (ENOSYS);
   }
   // 4) tell the client it worked
@@ -145,7 +140,6 @@ int io_open(resmgr_context_t *ctp, io_open_t *msg, void *extra1, void *extra2) {
   pthread_mutex_unlock(&mutex);
   std::cout << "Mutex is freed by thread " << gettid() << std::endl;
   iofunc_attr_t *handle = reinterpret_cast<iofunc_attr_t *>(extra1);
-  // iofunc_ocb_t *ocb = reinterpret_cast<iofunc_ocb_t *>(extra2);
 
   return (iofunc_open_default(ctp, msg, handle, extra2));
 }
